@@ -19,7 +19,7 @@ install:
 - cmd: >-
     python -m pip install pypiwin32==219
 
-    python -m pip install cx_Freeze==5.0.2
+    python -m pip install cx_Freeze==4.3.4
 
 
     curl "https://sourceforge.net/projects/pygobjectwin32/files/pygi-aio-3.24.1_rev1-setup_049a323fe25432b10f7e9f543b74598d4be74a39.exe/download" --location --output pygi-aio-setup.exe
