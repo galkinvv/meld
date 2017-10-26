@@ -98,24 +98,21 @@ except locale.Error as e:
     print("Couldn't set the locale: %s; falling back to 'C' locale" % e)
     locale.setlocale(locale.LC_ALL, 'C')
 gettext.textdomain(locale_domain)
-trans = gettext.translation(locale_domain, localedir=locale_dir, fallback=True)
-try:
-    _ = meld.conf._ = trans.ugettext
-    meld.conf.ngettext = trans.ungettext
-except AttributeError:
-    # py3k
-    _ = meld.conf._ = trans.gettext
-    meld.conf.ngettext = trans.ngettext
 
+force_trans_languages = None
 try:
     if os.name == 'nt':
+        if not {'LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'} & set(os.environ):
+            default_lang, enc = locale.getdefaultlocale()
+            force_trans_languages = (default_lang, 'C')
         from ctypes import cdll
-        if frozen:
+        try:
             libintl = cdll['libintl-8']
-        else:
+        except OSError:
             libintl = cdll.intl
-        libintl.bindtextdomain(locale_domain, locale_dir)
-        libintl.bind_textdomain_codeset(locale_domain, 'UTF-8')
+        locale_domain_bytes = locale_domain.encode()
+        libintl.bindtextdomain(locale_domain_bytes, locale_dir.encode('mbcs'))
+        libintl.bind_textdomain_codeset(locale_domain_bytes, b'UTF-8')
         del libintl
     else:
         locale.bindtextdomain(locale_domain, locale_dir)
@@ -133,6 +130,16 @@ except WindowsError as e:
     # Let's just continue, as translations are non-essential.
     print("Couldn't bind the translation domain. Some translations won't work.")
     print(e)
+
+trans = gettext.translation(locale_domain, localedir=locale_dir, 
+                            fallback=True, languages=force_trans_languages)
+try:
+    _ = meld.conf._ = trans.ugettext
+    meld.conf.ngettext = trans.ungettext
+except AttributeError:
+    # py3k
+    _ = meld.conf._ = trans.gettext
+    meld.conf.ngettext = trans.ngettext
 
 
 def show_error_and_exit(error_text):

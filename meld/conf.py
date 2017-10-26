@@ -24,7 +24,7 @@ def frozen():
     melddir = os.path.dirname(sys.executable)
 
     DATADIR = os.path.join(melddir, "share", "meld")
-    LOCALEDIR = os.path.join(melddir, "share", "mo")
+    LOCALEDIR = os.path.join(melddir, "share", "locale")
     UNINSTALLED_SCHEMA = True
 
     # This first bit should be unnecessary, but some things (GTK icon theme
