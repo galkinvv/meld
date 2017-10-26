@@ -44,6 +44,8 @@ def has_icons(self):
 def has_i18n(self):
     return "build_i18n" in self.distribution.cmdclass and os.name != 'nt'
 
+def has_i18n_mo(self):
+    return "build_i18n_mo" in self.distribution.cmdclass
 
 def has_data(self):
     return "build_data" in self.distribution.cmdclass
@@ -51,6 +53,7 @@ def has_data(self):
 
 distutils.command.build.build.sub_commands.extend([
     ("build_i18n", has_i18n),
+    ("build_i18n_mo", has_i18n_mo),
     ("build_icons", has_icons),
     ("build_help", has_help),
     ("build_data", has_data),
@@ -239,22 +242,6 @@ class build_i18n(distutils.cmd.Command):
         pass
 
     def _rebuild_po(self):
-        # If there is a po/LINGUAS file, or the LINGUAS environment variable
-        # is set, only compile the languages listed there.
-        selected_languages = None
-        linguas_file = os.path.join(self.po_dir, "LINGUAS")
-        if "LINGUAS" in os.environ:
-            selected_languages = os.environ["LINGUAS"].split()
-        elif os.path.isfile(linguas_file):
-            selected_languages = open(linguas_file).read().split()
-
-        # If we're on Windows, assume we're building frozen and make a bunch
-        # of insane assumptions.
-        if os.name == 'nt':
-            msgfmt = "C:\\Python27\\Tools\\i18n\\msgfmt"
-        else:
-            msgfmt = "msgfmt"
-
         # Update po(t) files and print a report
         # We have to change the working dir to the po dir for intltool
         cmd = ["intltool-update", (self.merge_po and "-r" or "-p"), "-g", self.domain]
@@ -262,25 +249,13 @@ class build_i18n(distutils.cmd.Command):
         os.chdir(self.po_dir)
         self.spawn(cmd)
         os.chdir(wd)
+
         max_po_mtime = 0
         for po_file in glob.glob("%s/*.po" % self.po_dir):
-            lang = os.path.basename(po_file[:-3])
-            if selected_languages and lang not in selected_languages:
-                continue
-            mo_dir = os.path.join("build", "mo", lang, "LC_MESSAGES")
-            mo_file = os.path.join(mo_dir, "%s.mo" % self.domain)
-            if not os.path.exists(mo_dir):
-                os.makedirs(mo_dir)
-            cmd = [msgfmt, po_file, "-o", mo_file]
             po_mtime = os.path.getmtime(po_file)
-            mo_mtime = os.path.exists(mo_file) and os.path.getmtime(mo_file) or 0
             if po_mtime > max_po_mtime:
                 max_po_mtime = po_mtime
-            if po_mtime > mo_mtime:
-                self.spawn(cmd)
 
-            targetpath = os.path.join("share/locale", lang, "LC_MESSAGES")
-            self.distribution.data_files.append((targetpath, (mo_file,)))
         self.max_po_mtime = max_po_mtime
 
     def run(self):
@@ -318,6 +293,45 @@ class build_i18n(distutils.cmd.Command):
                         self.spawn(cmd)
                     files_merged.append(file_merged)
                 self.distribution.data_files.append((target, files_merged))
+
+
+class build_i18n_mo(distutils.cmd.Command):
+
+    domain = "meld"
+    po_dir = "po"
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        # If there is a po/LINGUAS file, or the LINGUAS environment variable
+        # is set, only compile the languages listed there.
+        selected_languages = None
+        linguas_file = os.path.join(self.po_dir, "LINGUAS")
+        if "LINGUAS" in os.environ:
+            selected_languages = os.environ["LINGUAS"].split()
+        elif os.path.isfile(linguas_file):
+            selected_languages = open(linguas_file).read().split()
+
+        for po_file in glob.glob("%s/*.po" % self.po_dir):
+            lang = os.path.basename(po_file[:-3])
+            if selected_languages and lang not in selected_languages:
+                continue
+            mo_dir = os.path.join("build", "mo", lang, "LC_MESSAGES")
+            mo_file = os.path.join(mo_dir, "%s.mo" % self.domain)
+            if not os.path.exists(mo_dir):
+                os.makedirs(mo_dir)
+            cmd = ["msgfmt", po_file, "-o", mo_file]
+            po_mtime = os.path.getmtime(po_file)
+            mo_mtime = os.path.exists(mo_file) and os.path.getmtime(mo_file) or 0
+            if po_mtime > mo_mtime:
+                self.spawn(cmd)
+
+            targetpath = os.path.join("share/locale", lang, "LC_MESSAGES")
+            self.distribution.data_files.append((targetpath, (mo_file,)))
 
 
 class build_py(distutils.command.build_py.build_py):

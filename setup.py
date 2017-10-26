@@ -66,6 +66,7 @@ setup(
     ],
     cmdclass={
         "build_i18n": meld.build_helpers.build_i18n,
+        "build_i18n_mo": meld.build_helpers.build_i18n_mo,
         "build_help": meld.build_helpers.build_help,
         "build_icons": meld.build_helpers.build_icons,
         "build_data": meld.build_helpers.build_data,
