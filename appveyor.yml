@@ -38,7 +38,9 @@ install:
 
     echo %PYTHON_PREFIX% is used because it is the last supported by pygi-aio, GTK is istalled as a dependency of GTKSourceView
 
-    pygi-aio-setup\rcmd.exe /c "cd pygi-aio-setup && setup.bat %PYTHON_PREFIX% GTKSourceView >pygi-aio-setup.log"
+    echo DevTools is installed to get msgfmt for building translations
+
+    pygi-aio-setup\rcmd.exe /c "cd pygi-aio-setup && setup.bat %PYTHON_PREFIX% GTKSourceView DevTools >pygi-aio-setup.log"
 build_script:
 - cmd: >-
     %PYTHON_PREFIX%\Lib\site-packages\gnome\glib-compile-schemas data

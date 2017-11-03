@@ -57,6 +57,7 @@ gtk_libs = [
     'share/glib-2.0',
     'share/gtksourceview-3.0',
     'share/icons',
+    'share/locale',
 ]
 
 include_files = [(os.path.join(include_dll_path, path), path) for path in
@@ -64,9 +65,9 @@ include_files = [(os.path.join(include_dll_path, path), path) for path in
 
 build_exe_options = {
     "includes": ["gi"],
+    "excludes": ["tkinter"],
     "packages": ["gi", "weakref"],
     "include_files": include_files,
-    "bin_path_excludes": [""],
     "zip_exclude_packages": [],
     "zip_include_packages": ["*"],
 }
@@ -163,7 +164,7 @@ setup(
          ),
     ],
     cmdclass={
-        "build_i18n": meld.build_helpers.build_i18n,
+        "build_i18n_mo": meld.build_helpers.build_i18n_mo,
         "build_help": meld.build_helpers.build_help,
         "build_icons": meld.build_helpers.build_icons,
         "build_data": meld.build_helpers.build_data,
